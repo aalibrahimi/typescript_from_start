@@ -82,15 +82,21 @@ class BankAccount {
   }
 
   withdraw(amount: number): void {
-    // amount is the user withdrawal amount vs the balance on the card ( should be legit correct if its for debit )
-   if ( this.accountType === "debit") {
-    if (amount > this.balance) return;
-
-   }
-   if ( this.accountType === "credit"  && amount < this!.creditLimit)
-    this.balance -= amount;
+    if (this.accountType === "debit") {
+        if (amount > this.balance) {
+            console.log("Insufficient funds.")
+            return
+        }
+    }
+    if (this.accountType === "credit") {
+        if (!this.creditLimit || this.balance - amount < -this.creditLimit) {
+            console.log("Credit limit exceeded.")
+            return
+        }
+    }
+    this.balance -= amount
     this.transactions_history.push({ action: "withdraw", amount, accountType: this.accountType })
-    console.log(`New Balance: ${this.balance}`);
+    console.log(`New Balance: ${this.balance}`)
   }
   deposit(amount: number): void {
     this.balance += amount;
