@@ -3,6 +3,7 @@
   "dependencies": {
     "@types/prompt-sync": "^4.2.3",
     "@types/readline-sync": "^1.4.8",
+    "chalk": "^6.0.0",
     "prompt-sync": "^4.2.0",
     "readline-sync": "^1.4.10"
   },

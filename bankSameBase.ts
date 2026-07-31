@@ -1,5 +1,7 @@
 import readlineSync from "readline-sync";
 const myPrompt = (q: string) => readlineSync.question(q);
+import chalk from "chalk"
+// const chalk = new Chalk({ level: 3 })
 /**
  * Bank Account
  * Create a BankAccount class with a balance. Add methods to deposit, withdraw, and getBalance.
@@ -53,18 +55,25 @@ let multipleBankCards: bankCard[] = [
 ]
 
 // LOGIN - OUTSIDE THE CLASS
+console.log("BANK ACCOUNTS:\n")
+ for ( const bankNames of multipleBankCards ) {
+    
+    console.log(chalk.italic.underline(bankNames.name.toUpperCase()))
+ }
 
- const inputCreds = myPrompt("What is the credentials for this card?")
- const inputPin = Number(myPrompt("What is the pin for this card?"))
+ const inputBankName = myPrompt("\nSELECT ACCOUNT:\n\n").trim().toLowerCase()
+ const inputCreds = myPrompt("\nName on Account:\n").trim().toLowerCase()
+ const inputPin = Number(myPrompt("\nEnter Pin:\n"))
 
  const foundCard = 
     multipleBankCards.find(( card ) => {
-        return card.creds === inputCreds && card.pin === inputPin
+        return card.name.toLowerCase() === inputBankName && card.creds.toLowerCase() === inputCreds && card.pin === inputPin
     })
+
  
 // GUARD
 if (!foundCard) {
-   console.log( "Card not found, try again" )
+   console.log("Card not found, try again")
    process.exit()
 }
 
@@ -84,24 +93,27 @@ class BankAccount {
   withdraw(amount: number): void {
     if (this.accountType === "debit") {
         if (amount > this.balance) {
-            console.log("Insufficient funds.")
+            let Insufficient = chalk.red("======= Insufficient funds. ========")
+            console.log(Insufficient);
             return
         }
     }
     if (this.accountType === "credit") {
         if (!this.creditLimit || this.balance - amount < -this.creditLimit) {
-            console.log("Credit limit exceeded.")
+            let limitExceeded = chalk.yellow("Credit limit exceeded.")
+            console.log(limitExceeded)
             return
         }
     }
     this.balance -= amount
     this.transactions_history.push({ action: "withdraw", amount, accountType: this.accountType })
-    console.log(`New Balance: ${this.balance}`)
+    // console.log(chalk.green(`New Balance:+${this.balance}`))
+    console.log("New Balance: " + chalk.cyan(`$${this.balance}`))
   }
   deposit(amount: number): void {
     this.balance += amount;
     this.transactions_history.push({ action: "deposit", amount, accountType: this.accountType})
-    console.log(`New Balance: ${this.balance}`);
+    console.log("New Balance: " + chalk.cyan(`$${this.balance}`));
   }
   getBalance(): number {
     return this.balance;
@@ -109,13 +121,13 @@ class BankAccount {
 
   printStatement(): void {
     if ( this.transactions_history.length === 0 ) {
-        console.log(" There is no previous transactions ")
+        console.log(chalk.blue(" There is no previous transactions "))
         return
     }
     for ( const transaction of this.transactions_history) {
         console.log(`${transaction.action}: ${transaction.amount}`)
         if (this.creditLimit) {
-            console.log(`Credit limit: ${this.creditLimit}`)
+            console.log(chalk.bgCyanBright(`Credit limit: ${this.creditLimit}`))
         }
     }
   }
@@ -123,41 +135,42 @@ class BankAccount {
 
 const bankAccount = new BankAccount(foundCard!.balance, foundCard!.type, foundCard!.creditLimit);
 
-let runScript = true;
-
-while (runScript) {
-  let prompt = myPrompt(
+// let runScript = true;
+let prompt = myPrompt(
     "\nWhat would you like to do?\n\n1. Deposit\n2. Withdraw\n3. Get Balance\n4. View Statement\n5. exist\n\n",
   ).trim();
 
-  console.log("Selected Option: ", prompt);
+
+while ( prompt !== "exit" && Number(prompt) !== 5) {
+  
+//   console.log("Selected Option: ", prompt);
   switch (prompt) {
     case "1": {
-      let amount = myPrompt("How much would you like to deposit? ");
+      let amount = myPrompt("How much would you like to deposit? $");
       bankAccount.deposit(Number(amount));
       break;
     }
     case "2": {
-      let amount = myPrompt("How much would you like to withdraw? ");
+      let amount = myPrompt("How much would you like to withdraw? $") ;
       bankAccount.withdraw(Number(amount));
       break;
     }
     case "3": {
       const balance = bankAccount.getBalance();
-      console.log(`Current Balance: ${balance}`);
+      console.log(`========= Current Balance: $${balance} ====================`);
       break;
     }
     case "4": {
         bankAccount.printStatement();
         break;
     }
-    case "5": {
-        runScript = false;
-        break
-    }
     default:
-      console.log("Please enter a valid option.");
-      runScript = false;
-      continue;
+      console.log(chalk.italic("Please enter a valid option."));
   }
+
+  prompt = myPrompt(
+    "\n\n1. Deposit\n2. Withdraw\n3. Get Balance\n4. View Statement\n5. exist\n 6.Return to main menu\n",
+  ).trim();
 }
+
+
