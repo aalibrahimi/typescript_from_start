@@ -8,12 +8,14 @@ import chalk from "chalk"
  * Withdrawing more than the balance should do nothing.
  */
 
-type accountType = "debit" | "credit"
-type action = "deposit" | "withdraw"
+type accountType = "debit" | "credit" | "savings"
+type transactionSource = "user" | "system"
+type action = "deposit" | "withdraw" | "interest"
 
 interface transactionType {
     action: action,
     accountType: accountType,
+    source: transactionSource,
     amount: number,
 }
 
@@ -45,10 +47,10 @@ let multipleBankCards: bankCard[] = [
     {
         name: "capital one",
         balance: 250,
-        type: "credit",
+        type: "savings",
         creds: "jane",
         pin: 1234,
-        creditLimit: 890,
+        
         
     }
     
@@ -82,16 +84,17 @@ class BankAccount {
  private accountType: accountType;
  private creditLimit: number | undefined;
  private transactions_history: transactionType[] = []
+ private lastInterestDate: Date = new Date(); // setting it right now
 
 
-  constructor(balance: number, accountType: accountType, creditLimit?: number) {
+  constructor(balance: number, accountType: accountType, creditLimit?: number, ) {
     this.balance = balance;
     this.accountType = accountType;
     this.creditLimit = creditLimit;
   }
 
   withdraw(amount: number): void {
-    if (this.accountType === "debit") {
+    if (this.accountType === "savings" || this.accountType === "debit") {
         if (amount > this.balance) {
             let Insufficient = chalk.red("======= Insufficient funds. ========")
             console.log(Insufficient);
@@ -104,28 +107,70 @@ class BankAccount {
             console.log(limitExceeded)
             return
         }
+
+      
     }
+  
     this.balance -= amount
-    this.transactions_history.push({ action: "withdraw", amount, accountType: this.accountType })
+    this.transactions_history.push({ action: "withdraw", amount: this.balance, source: "user" , accountType: this.accountType })
     // console.log(chalk.green(`New Balance:+${this.balance}`))
     console.log("New Balance: " + chalk.cyan(`$${this.balance}`))
   }
+
   deposit(amount: number): void {
     this.balance += amount;
-    this.transactions_history.push({ action: "deposit", amount, accountType: this.accountType})
+    this.transactions_history.push({ action: "deposit", source: "user", amount, accountType: this.accountType})
     console.log("New Balance: " + chalk.cyan(`$${this.balance}`));
   }
   getBalance(): number {
     return this.balance;
   }
 
+  applyInterest() {
+    // get current time and compare to when interest was last applied
+    const now = new Date()
+    const diffDays = (now.getTime() - this.lastInterestDate.getTime()) / (1000 * 60 * 60 * 24)
+
+    // block interest if 30 days haven't passed yet
+    if (diffDays < 30) {
+        const daysLeft = Math.ceil(30 - diffDays)
+        console.log(`${daysLeft} days until next interest cycle.`)
+        return
+    }
+
+    let interestAmount = 0;
+    // savings: bank pays you 2% of your balance each month
+    if (this.accountType === "savings") {
+        const interest = this.balance * 0.02   // calculate 2% of current balance
+        this.balance += interest               // add it on top (compounding)
+        interestAmount = interest
+        console.log(`Interest earned: +$${interest.toFixed(2)}. New balance: $${this.balance.toFixed(2)}`)
+    }
+
+    // credit: you get charged 20% on however much you owe (negative balance only)
+    else if (this.accountType === "credit" && this.balance < 0) {
+        const charge = this.balance * 0.20     // 20% of a negative number = negative result
+        this.balance += charge                 // adding a negative makes balance more negative (deeper in debt)
+        interestAmount = Math.abs(charge)
+        console.log(`Interest charged: -$${Math.abs(charge).toFixed(2)}. New balance: $${this.balance.toFixed(2)}`)
+    }
+
+    // debit accounts earn nothing
+    else {
+        console.log("No interest applies to this account type.")
+    }
+
+    // reset the 30-day clock so interest won't apply again until next month
+    this.lastInterestDate = new Date()
+    this.transactions_history.push({ action: "interest", amount: interestAmount , source: "system", accountType: this.accountType })
+  }
   printStatement(): void {
     if ( this.transactions_history.length === 0 ) {
         console.log(chalk.blue(" There is no previous transactions "))
         return
     }
     for ( const transaction of this.transactions_history) {
-        console.log(`${transaction.action}: ${transaction.amount}`)
+        console.log(`[${transaction.source}] ${transaction.action}: ${transaction.amount}`)
         if (this.creditLimit) {
             console.log(chalk.bgCyanBright(`Credit limit: ${this.creditLimit}`))
         }
