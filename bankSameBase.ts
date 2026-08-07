@@ -9,14 +9,17 @@ import chalk from "chalk"
  */
 
 type accountType = "debit" | "credit" | "savings"
-type transactionSource = "user" | "system"
+// type transactionSource = "user" | "system"
 type action = "deposit" | "withdraw" | "interest"
+type transactionMethod = "atm" | "online" | "direct deposit"
 
 interface transactionType {
     action: action,
     accountType: accountType,
-    source: transactionSource,
+    // source: transactionSource,
+    method?: transactionMethod,
     amount: number,
+    balanceAfter: number,
 }
 
 type bankCard = {
@@ -93,7 +96,7 @@ class BankAccount {
     this.creditLimit = creditLimit;
   }
 
-  withdraw(amount: number): void {
+  withdraw(amount: number, methodInput: transactionMethod): void {
     if (this.accountType === "savings" || this.accountType === "debit") {
         if (amount > this.balance) {
             let Insufficient = chalk.red("======= Insufficient funds. ========")
@@ -111,15 +114,15 @@ class BankAccount {
       
     }
   
-    this.balance -= amount
-    this.transactions_history.push({ action: "withdraw", amount: this.balance, source: "user" , accountType: this.accountType })
+    let newBalance = this.balance -= amount
+    this.transactions_history.push({ action: "withdraw", amount: amount, balanceAfter: newBalance, method: methodInput , accountType: this.accountType })
     // console.log(chalk.green(`New Balance:+${this.balance}`))
     console.log("New Balance: " + chalk.cyan(`$${this.balance}`))
   }
 
-  deposit(amount: number): void {
-    this.balance += amount;
-    this.transactions_history.push({ action: "deposit", source: "user", amount, accountType: this.accountType})
+  deposit(amount: number, methodInput: transactionMethod): void {
+    let newBalance = this.balance += amount;
+    this.transactions_history.push({ action: "deposit", method: methodInput, amount: amount, balanceAfter: newBalance , accountType: this.accountType})
     console.log("New Balance: " + chalk.cyan(`$${this.balance}`));
   }
   getBalance(): number {
@@ -162,7 +165,7 @@ class BankAccount {
 
     // reset the 30-day clock so interest won't apply again until next month
     this.lastInterestDate = new Date()
-    this.transactions_history.push({ action: "interest", amount: interestAmount , source: "system", accountType: this.accountType })
+    this.transactions_history.push({ action: "interest", amount: interestAmount, balanceAfter: this.balance, accountType: this.accountType })
   }
   printStatement(): void {
     if ( this.transactions_history.length === 0 ) {
@@ -170,7 +173,7 @@ class BankAccount {
         return
     }
     for ( const transaction of this.transactions_history) {
-        console.log(`[${transaction.source}] ${transaction.action}: ${transaction.amount}`)
+        console.log(`[${transaction.method}] ${transaction.action}: ${transaction.amount}`)
         if (this.creditLimit) {
             console.log(chalk.bgCyanBright(`Credit limit: ${this.creditLimit}`))
         }
@@ -192,12 +195,26 @@ while ( prompt !== "exit" && Number(prompt) !== 5) {
   switch (prompt) {
     case "1": {
       let amount = myPrompt("How much would you like to deposit? $");
-      bankAccount.deposit(Number(amount));
+      const validateDepositMethod = ["atm", "online", "direct deposit"]
+      let depositMethod = myPrompt("DEPOSIT METHOD:\N (Atm\nOnline\ndirect deposit?)\n").toLowerCase().trim()
+
+      if(!validateDepositMethod.includes(depositMethod as transactionMethod)) {
+        console.log("Invalid Method.")
+        break
+      }
+      bankAccount.deposit(Number(amount), depositMethod as transactionMethod);
       break;
     }
     case "2": {
       let amount = myPrompt("How much would you like to withdraw? $") ;
-      bankAccount.withdraw(Number(amount));
+      const validWithdrawalMethod = ["atm", "online", "direct deposit"]
+      let withdrawMethod = myPrompt("WITHDRAW METHOD (\nAtm\nOnline\ndirect deposit?)\n").toLowerCase().trim()
+     
+      if(!validWithdrawalMethod.includes(withdrawMethod as transactionMethod)) {
+        console.log("Not a valid method");
+        break;
+      }
+      bankAccount.withdraw(Number(amount), withdrawMethod as transactionMethod);
       break;
     }
     case "3": {

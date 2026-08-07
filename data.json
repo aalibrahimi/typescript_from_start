@@ -1,0 +1,56 @@
+{
+    "accountData": {
+        "Chase":{
+            "accountBalance" : 0,
+            "accountType": "",
+            "creditLimit": 0,
+            "interest": 0,
+            "lastInterestDate": 0,
+            "transactionHistory": [
+                {
+                    "action": "",
+                    "source": "",
+                    "balance" : 0,
+                    "withdrawAmount": 0,
+                    "depositAmount": 0,
+                    "date" : ""
+                } 
+             ]
+        },
+        "Wells Fargo":{
+            "accountBalance" : 0,
+            "accountType": "",
+            "creditLimit": 0,
+            "interest": 0,
+            "lastInterestDate": 0,
+            "transactionHistory": [
+                {
+                    "action": "",
+                    "source": "",
+                    "balance" : 0,
+                    "withdrawAmount": 0,
+                    "depositAmount": 0,
+                    "date" : ""
+                } 
+             ]
+        },
+        "Capital One":{
+            "accountBalance" : 0,
+            "accountType": "",
+            "creditLimit": 0,
+            "interest": 0,
+            "lastInterestDate": 0,
+            "transactionHistory": [
+                {
+                    "action": "",
+                    "source": "",
+                    "balance" : 0,
+                    "withdrawAmount": 0,
+                    "depositAmount": 0,
+                    "date" : ""
+                } 
+             ]
+        }
+
+    }
+}
