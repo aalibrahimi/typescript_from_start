@@ -1,12 +1,14 @@
 {
     "accountData": {
         "Chase":{
-            "accountBalance" : 0,
-            "accountType": "",
-            "creditLimit": 0,
-            "interest": 0,
-            "lastInterestDate": 0,
-            "transactionHistory": [
+            "accountBalance" : 550,
+            "accountHolder": "ali",
+            "accountType": "debit",
+            "pin": "5621",
+            "creditLimit": null,
+            "interest": null,
+            "lastInterestDate": null,
+             "transactionHistory": [
                 {
                     "action": "",
                     "source": "",
@@ -16,14 +18,17 @@
                     "date" : ""
                 } 
              ]
+            
         },
         "Wells Fargo":{
-            "accountBalance" : 0,
-            "accountType": "",
-            "creditLimit": 0,
-            "interest": 0,
-            "lastInterestDate": 0,
-            "transactionHistory": [
+            "accountBalance" : 195,
+            "accountHolder": "john",
+            "accountType": "credit",
+            "pin": "2412",
+            "creditLimit": 1000,
+            "interest": 0.05,
+            "lastInterestDate": null,
+             "transactionHistory": [
                 {
                     "action": "",
                     "source": "",
@@ -33,14 +38,17 @@
                     "date" : ""
                 } 
              ]
+           
         },
         "Capital One":{
-            "accountBalance" : 0,
-            "accountType": "",
-            "creditLimit": 0,
-            "interest": 0,
-            "lastInterestDate": 0,
-            "transactionHistory": [
+            "accountBalance" : 250,
+            "accountHolder": "jane",
+            "accountType": "savings",
+            "pin": "2412",
+            "creditLimit": null,
+            "interest": 0.07,
+            "lastInterestDate": null,
+             "transactionHistory": [
                 {
                     "action": "",
                     "source": "",
@@ -50,6 +58,7 @@
                     "date" : ""
                 } 
              ]
+            
         }
 
     }
