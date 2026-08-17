@@ -9,7 +9,7 @@ import chalk from "chalk";
  * Withdrawing more than the balance should do nothing.
  */
 
-import fs from "node:fs";
+import fs, { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url"; 
 
@@ -55,7 +55,7 @@ interface jsonAccountDataTypes {
       accountType: accountType,
       pin: string,
       creditLimit?: number,
-      interest?: number,
+      interest: number,
       lastInterestDate: string,
       transactionHistory: transactionType[]  
     }
@@ -113,69 +113,88 @@ if (!chosenCard) {
   process.exit();
 }
 
-const foundCard = chosenCard[1]
+// const foundCard = chosenCard[1]
 
 class BankAccount {
-  private balance: number;
-  private accountType: accountType;
-  private creditLimit: number | undefined;
-  private transactions_history: transactionType[] = [];
-  private lastInterestDate: Date = new Date(); // setting it right now
+  // private balance: number;
+  // private accountType: accountType;
+  // private creditLimit: number | undefined;
+  // private transactions_history: transactionType[] = [];
+  // private lastInterestDate: Date = new Date(); // setting it right now
+  private bankName: string;
+  private accountDetails: jsonAccountDataTypes["accountData"][0]
 
-  constructor(balance: number, accountType: accountType, creditLimit?: number) {
-    this.balance = balance;
-    this.accountType = accountType;
-    this.creditLimit = creditLimit;
+  constructor(bankName: string, accountDetails: jsonAccountDataTypes["accountData"][0]) {
+    this.bankName = bankName,
+    this.accountDetails = accountDetails
   }
 
+  // constructor(balance: number, accountType: accountType, creditLimit?: number) {
+  //   this.accountDetails.interest = balance;
+  //   this.accountDetails.accountType = accountType;
+  //   this.creditLimit = creditLimit;
+  // }
+  save() {
+    // Step 1: Reading Existing Data
+    const existingData = JSON.parse(readFileSync("./data.json", "utf-8")) as jsonAccountDataTypes
+    // Step 2: Edit Data
+    existingData.accountData[this.bankName] = this.accountDetails
+    // Step 3: Writing to File
+    writeFileSync("./data.json", JSON.stringify(existingData, undefined, 2))
+
+  }
   withdraw(amount: number, methodInput: transactionMethod): void {
-    if (this.accountType === "savings" || this.accountType === "debit") {
-      if (amount > this.balance) {
+    if (this.accountDetails.accountType === "savings" || this.accountDetails.accountType === "debit") {
+      if (amount > this.accountDetails.accountBalance) {
         let Insufficient = chalk.red("======= Insufficient funds. ========");
         console.log(Insufficient);
         return;
       }
     }
-    if (this.accountType === "credit") {
-      if (!this.creditLimit || this.balance - amount < -this.creditLimit) {
+    if (this.accountDetails.accountType === "credit") {
+      if (!this.accountDetails.creditLimit || this.accountDetails.accountBalance - amount < -this.accountDetails.creditLimit) {
         let limitExceeded = chalk.yellow("Credit limit exceeded.");
         console.log(limitExceeded);
         return;
       }
     }
 
-    let newBalance = (this.balance -= amount);
-    this.transactions_history.push({
+    let newBalance = (this.accountDetails.accountBalance -= amount);
+    this.accountDetails.transactionHistory.push({
       action: "withdraw",
       amount: amount,
       balanceAfter: newBalance,
       method: methodInput,
-      accountType: this.accountType,
+      accountType: this.accountDetails.accountType,
     });
-    // console.log(chalk.green(`New Balance:+${this.balance}`))
-    console.log("New Balance: " + chalk.cyan(`$${this.balance}`));
+    // saving withdrawal changes
+    this.save()
+    // console.log(chalk.green(`New Balance:+${this.accountDetails.accountBalance}`))
+    console.log("New Balance: " + chalk.cyan(`$${this.accountDetails.accountBalance}`));
   }
 
   deposit(amount: number, methodInput: transactionMethod): void {
-    let newBalance = (this.balance += amount);
-    this.transactions_history.push({
+    let newBalance = (this.accountDetails.accountBalance += amount);
+    this.accountDetails.transactionHistory.push({
       action: "deposit",
       method: methodInput,
       amount: amount,
       balanceAfter: newBalance,
-      accountType: this.accountType,
+      accountType: this.accountDetails.accountType,
     });
-    console.log("New Balance: " + chalk.cyan(`$${this.balance}`));
+    // savings deposit
+    this.save()
+    console.log("New Balance: " + chalk.cyan(`$${this.accountDetails.accountBalance}`));
   }
   getBalance(): number {
-    return this.balance;
+    return this.accountDetails.accountBalance;
   }
 
   applyInterest() {
     // get current time and compare to when interest was last applied
     const now = new Date();
     const diffDays =
-      (now.getTime() - this.lastInterestDate.getTime()) / (1000 * 60 * 60 * 24);
+      (now.getTime() - new Date(this.accountDetails.lastInterestDate).getTime()) / (1000 * 60 * 60 * 24);
 
     // block interest if 30 days haven't passed yet
     if (diffDays < 30) {
@@ -186,22 +205,22 @@ class BankAccount {
 
     let interestAmount = 0;
     // savings: bank pays you 2% of your balance each month
-    if (this.accountType === "savings") {
-      const interest = this.balance * 0.02; // calculate 2% of current balance
-      this.balance += interest; // add it on top (compounding)
+    if (this.accountDetails.accountType === "savings") {
+      const interest = this.accountDetails.interest * 0.02; // calculate 2% of current balance
+      this.accountDetails.interest += interest; // add it on top (compounding)
       interestAmount = interest;
       console.log(
-        `Interest earned: +$${interest.toFixed(2)}. New balance: $${this.balance.toFixed(2)}`,
+        `Interest earned: +$${interest.toFixed(2)}. New balance: $${this.accountDetails.interest.toFixed(2)}`,
       );
     }
 
     // credit: you get charged 20% on however much you owe (negative balance only)
-    else if (this.accountType === "credit" && this.balance < 0) {
-      const charge = this.balance * 0.2; // 20% of a negative number = negative result
-      this.balance += charge; // adding a negative makes balance more negative (deeper in debt)
+    else if (this.accountDetails.accountType === "credit" && this.accountDetails.interest < 0) {
+      const charge = this.accountDetails.interest * 0.2; // 20% of a negative number = negative result
+      this.accountDetails.interest += charge; // adding a negative makes balance more negative (deeper in debt)
       interestAmount = Math.abs(charge);
       console.log(
-        `Interest charged: -$${Math.abs(charge).toFixed(2)}. New balance: $${this.balance.toFixed(2)}`,
+        `Interest charged: -$${Math.abs(charge).toFixed(2)}. New balance: $${this.accountDetails.interest.toFixed(2)}`,
       );
     }
 
@@ -211,34 +230,38 @@ class BankAccount {
     }
 
     // reset the 30-day clock so interest won't apply again until next month
-    this.lastInterestDate = new Date();
-    this.transactions_history.push({
+    this.accountDetails.lastInterestDate = new Date().toISOString();
+    this.accountDetails.transactionHistory.push({
       action: "interest",
       amount: interestAmount,
-      balanceAfter: this.balance,
-      accountType: this.accountType,
+      balanceAfter: this.accountDetails.interest,
+      accountType: this.accountDetails.accountType,
     });
+    // saving interest rates / dates
+    this.save()
   }
   printStatement(): void {
-    if (this.transactions_history.length === 0) {
+    if (this.accountDetails.transactionHistory.length === 0) {
       console.log(chalk.blue(" There is no previous transactions "));
       return;
     }
-    for (const transaction of this.transactions_history) {
+    for (const transaction of this.accountDetails.transactionHistory) {
       console.log(
         `[${transaction.method}] ${transaction.action}: ${transaction.amount}`,
       );
-      if (this.creditLimit) {
-        console.log(chalk.bgCyanBright(`Credit limit: ${this.creditLimit}`));
+      if (this.accountDetails.creditLimit) {
+        console.log(chalk.bgCyanBright(`Credit limit: ${this.accountDetails.creditLimit}`));
       }
     }
   }
 }
 
 const bankAccount = new BankAccount(
-  foundCard.accountBalance,
-  foundCard.accountType,
-  foundCard.creditLimit,
+  // foundCard.accountBalance,
+  // foundCard.accountType,
+  // foundCard.creditLimit,
+  chosenCard[0],
+  chosenCard[1], 
 );
 
 // let runScript = true;

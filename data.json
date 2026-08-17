@@ -1,65 +1,75 @@
 {
-    "accountData": {
-        "Chase":{
-            "accountBalance" : 550,
-            "accountHolder": "ali",
-            "accountType": "debit",
-            "pin": "5621",
-            "creditLimit": null,
-            "interest": null,
-            "lastInterestDate": null,
-             "transactionHistory": [
-                {
-                    "action": "",
-                    "source": "",
-                    "balance" : 0,
-                    "withdrawAmount": 0,
-                    "depositAmount": 0,
-                    "date" : ""
-                } 
-             ]
-            
+  "accountData": {
+    "Chase": {
+      "accountBalance": 610,
+      "accountHolder": "ali",
+      "accountType": "debit",
+      "pin": "5621",
+      "creditLimit": null,
+      "interest": 0,
+      "lastInterestDate": null,
+      "transactionHistory": [
+        {
+          "action": "",
+          "source": "",
+          "balance": 0,
+          "withdrawAmount": 0,
+          "depositAmount": 0,
+          "date": ""
         },
-        "Wells Fargo":{
-            "accountBalance" : 195,
-            "accountHolder": "john",
-            "accountType": "credit",
-            "pin": "2412",
-            "creditLimit": 1000,
-            "interest": 0.05,
-            "lastInterestDate": null,
-             "transactionHistory": [
-                {
-                    "action": "",
-                    "source": "",
-                    "balance" : 0,
-                    "withdrawAmount": 0,
-                    "depositAmount": 0,
-                    "date" : ""
-                } 
-             ]
-           
+        {
+          "action": "deposit",
+          "method": "online",
+          "amount": 260,
+          "balanceAfter": 810,
+          "accountType": "debit"
         },
-        "Capital One":{
-            "accountBalance" : 250,
-            "accountHolder": "jane",
-            "accountType": "savings",
-            "pin": "2412",
-            "creditLimit": null,
-            "interest": 0.07,
-            "lastInterestDate": null,
-             "transactionHistory": [
-                {
-                    "action": "",
-                    "source": "",
-                    "balance" : 0,
-                    "withdrawAmount": 0,
-                    "depositAmount": 0,
-                    "date" : ""
-                } 
-             ]
-            
+        {
+          "action": "withdraw",
+          "amount": 200,
+          "balanceAfter": 610,
+          "method": "atm",
+          "accountType": "debit"
         }
-
+      ]
+    },
+    "Wells Fargo": {
+      "accountBalance": 195,
+      "accountHolder": "john",
+      "accountType": "credit",
+      "pin": "2412",
+      "creditLimit": 1000,
+      "interest": 0.05,
+      "lastInterestDate": null,
+      "transactionHistory": [
+        {
+          "action": "",
+          "source": "",
+          "balance": 0,
+          "withdrawAmount": 0,
+          "depositAmount": 0,
+          "date": ""
+        }
+      ]
+    },
+    "Capital One": {
+      "accountBalance": 250,
+      "accountHolder": "jane",
+      "accountType": "savings",
+      "pin": "2412",
+      "creditLimit": null,
+      "interest": 0.07,
+      "lastInterestDate": null,
+      "transactionHistory": [
+        {
+          "action": "",
+          "source": "",
+          "balance": 0,
+          "withdrawAmount": 0,
+          "depositAmount": 0,
+          "date": ""
+        }
+      ]
     }
+  }
 }
