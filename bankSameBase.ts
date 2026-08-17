@@ -11,18 +11,18 @@ import chalk from "chalk";
 
 import fs, { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url"; 
+import { fileURLToPath } from "node:url";
 
 // wher does the data.json actually live? NEXT TO THIS FILE
-const here = path.dirname(fileURLToPath(import.meta.url))
-const DATA_PATH = path.join(here, "data.json")
+const here = path.dirname(fileURLToPath(import.meta.url));
+const DATA_PATH = path.join(here, "data.json");
 
 function loadData() {
   const raw = fs.readFileSync(DATA_PATH, "utf-8"); // string
   // const raw = fs.readFileSync("./data.json", "utf-8"); // could now delete lines 17 and 18
-  const jsonParsedData = JSON.parse(raw) as jsonAccountDataTypes  // object
-  console.log(raw)
-  return jsonParsedData
+  const jsonParsedData = JSON.parse(raw) as jsonAccountDataTypes; // object
+  console.log(raw);
+  return jsonParsedData;
 }
 
 // GOAL: Read current value and add new values
@@ -30,7 +30,7 @@ function loadData() {
 // 2. Edit the retrieved data
 // 3. Write entire new data to file
 
-const jsonReturnedData = loadData()
+const jsonReturnedData = loadData();
 // jsonReturnedData.accountData["chase"].accountBalance
 
 type accountType = "debit" | "credit" | "savings";
@@ -50,18 +50,18 @@ interface transactionType {
 interface jsonAccountDataTypes {
   accountData: {
     [bankName: string]: {
-      accountBalance: number,
-      accountHolder: string,
-      accountType: accountType,
-      pin: string,
-      creditLimit?: number,
-      interest: number,
-      lastInterestDate: string,
-      transactionHistory: transactionType[]  
-    }
-  }
- 
-};
+      accountBalance: number;
+      accountHolder: string;
+      accountType: accountType;
+      pin: string;
+      creditLimit: number | null;
+      interest: number;
+      lastInterestDate: string;
+      transactionHistory: transactionType[];
+    };
+  };
+  userProfiles: userProfile;
+}
 
 // let multipleBankCards: bankCard[] = [
 //   {
@@ -88,7 +88,6 @@ interface jsonAccountDataTypes {
 //   },
 // ];
 
-
 // LOGIN - OUTSIDE THE CLASS
 console.log("BANK ACCOUNTS:\n");
 for (const bankNames of Object.keys(jsonReturnedData.accountData)) {
@@ -97,15 +96,17 @@ for (const bankNames of Object.keys(jsonReturnedData.accountData)) {
 
 const inputBankName = myPrompt("\nSELECT ACCOUNT:\n\n").trim().toLowerCase();
 const inputCreds = myPrompt("\nName on Account:\n").trim().toLowerCase();
-const inputPin = (myPrompt("\nEnter Pin:\n"));
+const inputPin = myPrompt("\nEnter Pin:\n");
 
-const chosenCard = Object.entries(jsonReturnedData.accountData).find(( [bankName, account] ) => {
-  return (
-   bankName.toLowerCase() === inputBankName &&
-   account.accountHolder .toLowerCase() === inputCreds &&
-   account.pin === inputPin
-  );
-});
+const chosenCard = Object.entries(jsonReturnedData.accountData).find(
+  ([bankName, account]) => {
+    return (
+      bankName.toLowerCase() === inputBankName &&
+      account.accountHolder.toLowerCase() === inputCreds &&
+      account.pin === inputPin
+    );
+  },
+);
 
 // GUARD
 if (!chosenCard) {
@@ -115,6 +116,82 @@ if (!chosenCard) {
 
 // const foundCard = chosenCard[1]
 
+interface userProfile {
+  [profileName: string]: {
+    accounts_count: number;
+  };
+}
+class BankInstitutions {
+  //  have a user select a bank
+  //  apply for a card
+  //  transfer between different instituions and within
+  //  a user can have multiple accounts ( sign in options differ )
+  private institutionName: string;
+  private isLoggedIn: boolean;
+  private currentUser: string;
+
+  constructor(institutionName: string) {
+    this.institutionName = institutionName;
+    this.isLoggedIn = false;
+    this.currentUser = "";
+  }
+
+  applyForCard(
+    instituionName: string,
+    whichCard: accountType,
+    pin: string,
+    accountHolder: string,
+  ) {
+    return new BankAccount(instituionName, {
+      accountType: whichCard,
+      pin: pin,
+      accountHolder: accountHolder,
+      accountBalance: 0,
+      interest: 0,
+      lastInterestDate: "",
+      transactionHistory: [],
+      creditLimit: null,
+    });
+  }
+
+  createProfileAccount(profileName: string) {
+    let allAccounts = loadData().userProfiles;
+    if (!Object.keys(allAccounts).includes(profileName)) {
+      allAccounts[profileName] = { accounts_count: 0 };
+      writeFileSync("./data.json", JSON.stringify(allAccounts, undefined, 2));
+      // this.isLoggedIn = true
+      // return
+    }
+
+    this.isLoggedIn = true;
+    this.currentUser = profileName;
+  }
+
+  trasnferMoneyBetweenThings(
+    instituionName: string,
+    whichCard: accountType,
+    pin: string,
+    accountHolder: string,
+    amount: string,
+  ) {
+    if (!this.isLoggedIn) {
+      return;
+    }
+
+    let usersAccounts = Object.entries(loadData().accountData)
+      .filter(
+        ([bankName, accountDetails]) =>
+          accountDetails.accountHolder === this.currentUser,
+      )
+      .map(([bankName, accountDetails]) => {
+        return {
+          institution: bankName,
+          ...accountDetails,
+        };
+      });
+  }
+}
+
 class BankAccount {
   // private balance: number;
   // private accountType: accountType;
@@ -122,11 +199,13 @@ class BankAccount {
   // private transactions_history: transactionType[] = [];
   // private lastInterestDate: Date = new Date(); // setting it right now
   private bankName: string;
-  private accountDetails: jsonAccountDataTypes["accountData"][0]
+  private accountDetails: jsonAccountDataTypes["accountData"][0];
 
-  constructor(bankName: string, accountDetails: jsonAccountDataTypes["accountData"][0]) {
-    this.bankName = bankName,
-    this.accountDetails = accountDetails
+  constructor(
+    bankName: string,
+    accountDetails: jsonAccountDataTypes["accountData"][0],
+  ) {
+    ((this.bankName = bankName), (this.accountDetails = accountDetails));
   }
 
   // constructor(balance: number, accountType: accountType, creditLimit?: number) {
@@ -136,15 +215,19 @@ class BankAccount {
   // }
   save() {
     // Step 1: Reading Existing Data
-    const existingData = JSON.parse(readFileSync("./data.json", "utf-8")) as jsonAccountDataTypes
-    // Step 2: Edit Data
-    existingData.accountData[this.bankName] = this.accountDetails
+    const existingData = JSON.parse(
+      readFileSync("./data.json", "utf-8"),
+    ) as jsonAccountDataTypes;
+    // Step 2: Edit Data 
+    existingData.accountData[this.bankName] = this.accountDetails;
     // Step 3: Writing to File
-    writeFileSync("./data.json", JSON.stringify(existingData, undefined, 2))
-
+    writeFileSync("./data.json", JSON.stringify(existingData, undefined, 2));
   }
   withdraw(amount: number, methodInput: transactionMethod): void {
-    if (this.accountDetails.accountType === "savings" || this.accountDetails.accountType === "debit") {
+    if (
+      this.accountDetails.accountType === "savings" ||
+      this.accountDetails.accountType === "debit"
+    ) {
       if (amount > this.accountDetails.accountBalance) {
         let Insufficient = chalk.red("======= Insufficient funds. ========");
         console.log(Insufficient);
@@ -152,7 +235,11 @@ class BankAccount {
       }
     }
     if (this.accountDetails.accountType === "credit") {
-      if (!this.accountDetails.creditLimit || this.accountDetails.accountBalance - amount < -this.accountDetails.creditLimit) {
+      if (
+        !this.accountDetails.creditLimit ||
+        this.accountDetails.accountBalance - amount <
+          -this.accountDetails.creditLimit
+      ) {
         let limitExceeded = chalk.yellow("Credit limit exceeded.");
         console.log(limitExceeded);
         return;
@@ -168,9 +255,11 @@ class BankAccount {
       accountType: this.accountDetails.accountType,
     });
     // saving withdrawal changes
-    this.save()
+    this.save();
     // console.log(chalk.green(`New Balance:+${this.accountDetails.accountBalance}`))
-    console.log("New Balance: " + chalk.cyan(`$${this.accountDetails.accountBalance}`));
+    console.log(
+      "New Balance: " + chalk.cyan(`$${this.accountDetails.accountBalance}`),
+    );
   }
 
   deposit(amount: number, methodInput: transactionMethod): void {
@@ -183,8 +272,10 @@ class BankAccount {
       accountType: this.accountDetails.accountType,
     });
     // savings deposit
-    this.save()
-    console.log("New Balance: " + chalk.cyan(`$${this.accountDetails.accountBalance}`));
+    this.save();
+    console.log(
+      "New Balance: " + chalk.cyan(`$${this.accountDetails.accountBalance}`),
+    );
   }
   getBalance(): number {
     return this.accountDetails.accountBalance;
@@ -194,7 +285,9 @@ class BankAccount {
     // get current time and compare to when interest was last applied
     const now = new Date();
     const diffDays =
-      (now.getTime() - new Date(this.accountDetails.lastInterestDate).getTime()) / (1000 * 60 * 60 * 24);
+      (now.getTime() -
+        new Date(this.accountDetails.lastInterestDate).getTime()) /
+      (1000 * 60 * 60 * 24);
 
     // block interest if 30 days haven't passed yet
     if (diffDays < 30) {
@@ -215,7 +308,10 @@ class BankAccount {
     }
 
     // credit: you get charged 20% on however much you owe (negative balance only)
-    else if (this.accountDetails.accountType === "credit" && this.accountDetails.interest < 0) {
+    else if (
+      this.accountDetails.accountType === "credit" &&
+      this.accountDetails.interest < 0
+    ) {
       const charge = this.accountDetails.interest * 0.2; // 20% of a negative number = negative result
       this.accountDetails.interest += charge; // adding a negative makes balance more negative (deeper in debt)
       interestAmount = Math.abs(charge);
@@ -238,7 +334,7 @@ class BankAccount {
       accountType: this.accountDetails.accountType,
     });
     // saving interest rates / dates
-    this.save()
+    this.save();
   }
   printStatement(): void {
     if (this.accountDetails.transactionHistory.length === 0) {
@@ -250,7 +346,11 @@ class BankAccount {
         `[${transaction.method}] ${transaction.action}: ${transaction.amount}`,
       );
       if (this.accountDetails.creditLimit) {
-        console.log(chalk.bgCyanBright(`Credit limit: ${this.accountDetails.creditLimit}`));
+        console.log(
+          chalk.bgCyanBright(
+            `Credit limit: ${this.accountDetails.creditLimit}`,
+          ),
+        );
       }
     }
   }
@@ -261,7 +361,7 @@ const bankAccount = new BankAccount(
   // foundCard.accountType,
   // foundCard.creditLimit,
   chosenCard[0],
-  chosenCard[1], 
+  chosenCard[1],
 );
 
 // let runScript = true;
